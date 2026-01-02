@@ -144,10 +144,174 @@ Example:
 
 ## 7. Security
 
+### 7.1 Secrets Management - Summary: What Must Never Be Checked Into Git or Code
+
+**The repository must never contain secrets** — any material that can be used to
+authenticate, authorize, or bill against an account, service, or infrastructure.
+
+This includes both files and inline values embedded in code or scripts.
+
+#### 7.1.1 Definition of "Secrets"
+
+A secret is any value that:
+
+- Authenticates an identity
+- Grants access to a system, API, or service
+- Authorizes actions or permissions
+- Enables billable usage
+- Establishes cryptographic trust
+
+If exposed, a secret can result in:
+
+- Account compromise
+- Unauthorized access
+- Financial loss
+- Infrastructure takeover
+
+#### 7.1.2 Categories of Secrets That Must Never Be Committed
+
+##### 7.1.2.1 API Keys
+
+Static credentials used for programmatic access.
+
+Examples:
+
+- OpenAI API keys
+- Stripe keys
+- SendGrid keys
+- Twilio keys
+
+Risk:
+
+- Immediate unauthorized API usage
+- Direct financial impact
+
+##### 7.1.2.2 Access Tokens and OAuth Tokens
+
+Bearer tokens granting scoped or full access.
+
+Examples:
+
+- GitHub Personal Access Tokens (PATs)
+- OAuth access tokens
+- CI/CD tokens
+
+Risk:
+
+- Repository access
+- Code modification
+- Secret exfiltration
+
+##### 7.1.2.3 Refresh Tokens
+
+Long-lived tokens capable of minting new access tokens.
+
+Risk:
+
+- Persistent compromise
+- Difficult to detect abuse
+
+##### 7.1.2.4 Cloud Provider Credentials
+
+Credentials granting infrastructure access.
+
+Examples:
+
+- AWS Access Key ID + Secret Key
+- GCP service account JSON keys
+- Azure client secrets
+
+Risk:
+
+- Infrastructure compromise
+- Crypto-mining abuse
+- Severe billing impact
+
+##### 7.1.2.5 Cryptographic Private Keys
+
+Keys establishing identity or trust.
+
+Examples:
+
+- SSH private keys (id_rsa, id_ed25519)
+- TLS private keys (`*.pem`, `*.key`)
+- Signing keys
+
+Risk:
+
+- Server access
+- Trust chain compromise
+- Man-in-the-middle attacks
+
+##### 7.1.2.6 Service Account Credentials
+
+Non-human credentials stored as files.
+
+Examples:
+
+- JSON/YAML credential files
+- CI service secrets
+
+Risk:
+
+- Silent, high-privilege access
+
+##### 7.1.2.7 Webhook Secrets and Shared Secrets
+
+Used to validate inbound requests.
+
+Examples:
+
+- GitHub webhook secrets
+- Stripe webhook signing secrets
+
+Risk:
+
+- Forged events
+- Unauthorized state changes
+
+#### 7.1.3 File Types and Locations That Must Be Excluded
+
+The following must never be committed:
+
+- `.env`, `.env.*` (except `.env.example`)
+- `vars.env`, secret variable files
+- Credential files (`*.pem`, `*.key`, `*.p12`, `*.json` keys)
+- Generated logs containing sensitive values
+- Tool caches that may contain secrets
+
+These exclusions must be enforced via `.gitignore`.
+
+#### 7.1.4 Code and Script Scanning Requirements
+
+Secrets must not appear:
+
+- Inline in source code
+- In shell scripts
+- In configuration files
+- In comments
+- In logs or debug output
+
+Repositories must enforce:
+
+- Pre-commit secret scanning
+- CI-level secret detection
+- AI agent instructions prohibiting secret creation or logging
+
+High-entropy strings and known token patterns must be treated as potential secrets until proven otherwise.
+
+#### 7.1.5 Security Posture Statement
+
+**Secrets** — including API keys, access tokens, credentials, private keys, or any
+material that grants authenticated or billable access — **must never be committed
+to Git repositories** and must be actively scanned for in both code and configuration.
+
+### 7.2 General Security Standards
+
 - Never log secrets
-- credentails and IP addresses should never be hardcoded into scripts, should exist in .env file
-- .env file should not be checked into any repo (.gitignore)
-- An example .env file (.env.example) should be created and checked in via git
+- Credentials and IP addresses should never be hardcoded into scripts, should exist in `.env` file
+- `.env` file should not be checked into any repo (`.gitignore`)
+- An example `.env` file (`.env.example`) should be created and checked in via git
 - Treat all inputs as untrusted
 - Document required permissions
 - Use least privilege
@@ -304,9 +468,38 @@ AI agents must:
 
 Violations of `.gitignore` rules are considered security defects.
 
+### 11.2 Secrets and Credentials Handling
+
+AI agents must:
+
+- Never generate real secrets
+- Never hardcode credentials
+- Never log or echo secret values
+- Use environment variables for all sensitive data
+- Provide example placeholders only (e.g. `YOUR_API_KEY_HERE`)
+- Treat any suspected secret as a security defect
+
+If a secret is required for functionality, the AI must:
+
+- Document it
+- Reference `.env.example`
+- Ensure it is excluded from version control
+
+AI agents must understand that secrets include:
+
+- API keys (OpenAI, Stripe, SendGrid, Twilio, etc.)
+- Access tokens and OAuth tokens (GitHub PATs, CI/CD tokens)
+- Refresh tokens
+- Cloud provider credentials (AWS, GCP, Azure)
+- Cryptographic private keys (SSH, TLS)
+- Service account credentials
+- Webhook secrets and shared secrets
+
+**High-entropy strings and known token patterns must be treated as potential secrets until proven otherwise.**
+
 ---
 
-### 11.2 Pre-commit Execution and Log Generation
+### 11.3 Pre-commit Execution and Log Generation
 
 Pre-commit is a mandatory quality gate.
 
@@ -315,3 +508,16 @@ AI agents must execute pre-commit using the repository helper script:
 ```bash
 ./scripts/run-precommit.sh
 ```
+
+---
+
+## 12. Why Security Matters in This Framework
+
+What this framework enforces is not just "don't commit keys," but:
+
+- **Defense-in-depth**: Multiple layers of protection (`.gitignore`, pre-commit, CI scanning)
+- **Least privilege**: Access only what is necessary
+- **Auditability**: Clear trails of what was checked and when
+- **AI-safe development**: Explicit instructions for AI agents to prevent accidental secret exposure
+
+This is exactly the right level of rigor for an AI-assisted engineering framework.
