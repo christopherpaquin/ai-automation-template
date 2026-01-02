@@ -1,9 +1,9 @@
-# 🤖 AI Automation Template
+# 🤖 GitHub AI Engineering Framework
 
 <img src="https://chrispaquin.com/wp-content/uploads/2026/01/Nobby-the-robot.png" alt="Nobby the Robot" width="50%">
 
-> A **governance-first** GitHub Template for creating AI-assisted automation projects.
-> This template enforces security, documentation consistency, and quality through
+> A **governance-first** GitHub Framework for creating AI-assisted automation projects.
+> This framework enforces security, documentation consistency, and quality through
 > automated checks and explicit AI agent instructions.
 
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
@@ -32,7 +32,7 @@
 ## 🎯 Overview
 
 This repository provides a structured foundation for AI-assisted development
-projects. Unlike traditional templates, this template treats
+projects. Unlike traditional templates, this framework treats
 **documentation as executable instructions** for AI agents. All AI tools
 (Cursor, ChatGPT, Copilot, etc.) are required to follow the standards
 defined in `docs/ai/CONTEXT.md`, making documentation the authoritative
@@ -40,7 +40,7 @@ governance mechanism.
 
 ### Core Philosophy
 
-**Governance through Documentation**: In this template, documentation serves
+**Governance through Documentation**: In this framework, documentation serves
 dual purposes:
 
 - ✅ **Human-readable guidance** for developers and operators
@@ -57,7 +57,7 @@ across all AI-assisted development work.
 
 ### 1. Template Structure
 
-When you use this template, you get:
+When you use this framework, you get:
 
 | Component | Status | Description |
 |-----------|--------|-------------|
@@ -92,7 +92,7 @@ Governance is enforced through multiple layers:
 
 ### 🔐 Security Governance
 
-Security is the **highest priority** in this template. All contributors and AI agents must adhere to strict security standards.
+Security is the **highest priority** in this framework. All contributors and AI agents must adhere to strict security standards.
 
 #### Credentials and Secrets Management
 
@@ -145,7 +145,7 @@ Documentation in this repository serves as **executable instructions** for AI ag
 
 1. ✅ **Documentation Defines Behavior**: `docs/ai/CONTEXT.md` contains mandatory standards that AI agents must follow
 2. ✅ **Requirements Are Contracts**: `docs/requirements.md` defines the behavioral contract for the project
-3. ✅ **Consistency Is Enforced**: All projects using this template follow the same documentation structure
+3. ✅ **Consistency Is Enforced**: All projects using this framework follow the same documentation structure
 4. ✅ **AI Agents Are Accountable**: AI agents cannot deviate from documented standards without explicit clarification
 
 #### Documentation Structure
@@ -200,7 +200,7 @@ Per `docs/ai/CONTEXT.md`, all projects must include:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                  🤖 AI Automation Template                      │
+│            🤖 GitHub AI Engineering Framework                   │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                   │
 │   ┌──────────────────────┐      ┌──────────────────────┐      │
@@ -237,9 +237,9 @@ Per `docs/ai/CONTEXT.md`, all projects must include:
 
 ## 🚀 Installation
 
-### Step 1: Use This Template
+### Step 1: Use This Framework
 
-- [ ] Click **"Use this template"** on GitHub to create a new repository from this template
+- [ ] Click **"Use this template"** on GitHub to create a new repository from this framework
 
 ### Step 2: Clone Your New Repository
 
@@ -279,7 +279,7 @@ If you need to recreate the template structure:
 
 ## 🗑️ Uninstall Steps
 
-To remove this template's infrastructure from a project:
+To remove this framework's infrastructure from a project:
 
 ### Step 1: Remove Pre-commit Hooks
 
@@ -421,7 +421,7 @@ Markdown linting rules are configured in `.pymarkdown.json`:
 
 ### Security-First Design
 
-This template is designed with security as the highest priority:
+This framework is designed with security as the highest priority:
 
 | Security Feature | Status | Description |
 |-----------------|--------|-------------|
@@ -448,7 +448,7 @@ This template is designed with security as the highest priority:
 
 ### Reporting Security Issues
 
-If you discover a security vulnerability in this template:
+If you discover a security vulnerability in this framework:
 
 1. ❌ **Do not** open a public issue
 2. ✅ Contact the repository maintainers privately
@@ -478,7 +478,7 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for full 
 
 ## 🤝 Contributing
 
-When contributing to this template:
+When contributing to this framework:
 
 - [x] Follow all standards in `docs/ai/CONTEXT.md`
 - [x] Ensure pre-commit passes: `./scripts/run-precommit.sh`

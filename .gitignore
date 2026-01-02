@@ -1,5 +1,5 @@
 ###############################################################################
-# AI Automation Template - .gitignore
+# GitHub AI Engineering Framework - .gitignore
 #
 # This file follows the standards defined in docs/ai/CONTEXT.md
 # Secrets, runtime artifacts, and generated files must never be committed.
