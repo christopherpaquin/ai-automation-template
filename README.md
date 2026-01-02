@@ -8,7 +8,7 @@
   <div style="flex: 1;">
     <blockquote>
       <p>A <strong>governance-first</strong> GitHub-centric framework for
-      AI-assisted software engineering with enforced standards, pre-commit, CI,
+      AI-assisted software engineering framework with enforced standards, pre-commit, CI,
       and explicit operational contracts.</p>
       <p>This framework enforces security, documentation consistency, and
       quality through automated checks and explicit AI agent instructions.</p>
