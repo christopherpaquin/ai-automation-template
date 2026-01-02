@@ -1,6 +1,6 @@
 # AI Automation Template
 
-![Nobby the Robot](https://chrispaquin.com/wp-content/uploads/2026/01/Nobby-the-robot.png)
+<img src="https://chrispaquin.com/wp-content/uploads/2026/01/Nobby-the-robot.png" alt="Nobby the Robot" width="50%">
 
 A GitHub Template for creating AI-assisted automation projects with
 **governance-first** standards. This template enforces security,

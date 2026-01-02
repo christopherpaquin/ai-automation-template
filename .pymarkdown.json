@@ -12,6 +12,9 @@
     },
     "md032": {
       "enabled": true
+    },
+    "md033": {
+      "enabled": false
     }
   }
 }
