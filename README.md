@@ -291,16 +291,11 @@ Per `docs/ai/CONTEXT.md`, all projects must include:
 
 ## 🏗️ High-Level Architecture Overview
 
-<<<<<<< HEAD
 <div style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px;">
   <div style="flex: 0 0 25%;">
     <img src="https://chrispaquin.com/wp-content/uploads/2026/01/framework-flow.png"
          alt="Nobby the Robot" width="60%" align="center">
   </div>
-
-=======
-<img src="architecture-diagram.png" alt="GitHub AI Engineering Framework Architecture" width="100%">
->>>>>>> c38cc50 (Enhance README with comprehensive template workflow documentation)
 
 **Key Components**:
 
