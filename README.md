@@ -2,7 +2,7 @@
 
 <img src="https://chrispaquin.com/wp-content/uploads/2026/01/Nobby-the-robot.png" alt="Nobby the Robot" width="50%">
 
-> A **governance-first** GitHub Framework for creating AI-assisted automation projects.
+> A **governance-first** GitHub-centric framework for AI-assisted software engineering with enforced standards, pre-commit, CI, and explicit operational contracts.
 > This framework enforces security, documentation consistency, and quality through
 > automated checks and explicit AI agent instructions.
 
