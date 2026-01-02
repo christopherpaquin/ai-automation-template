@@ -3,7 +3,7 @@
 <div style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px;">
   <div style="flex: 0 0 25%;">
     <img src="https://chrispaquin.com/wp-content/uploads/2026/01/Nobby-the-robot.png"
-         alt="Nobby the Robot" width="100%" align="left">
+         alt="Nobby the Robot" width="30%" align="left">
   </div>
   <div style="flex: 1;">
     <blockquote>
