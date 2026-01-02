@@ -367,7 +367,32 @@ Pre-commit hooks are configured in `.pre-commit-config.yaml`. The default config
 | 🐍 Python | Ruff linting and formatting | ✅ Active |
 | 🐚 Bash | ShellCheck and shfmt formatting | ✅ Active |
 | 📄 Markdown | PyMarkdown validation | ✅ Active |
-| 🔒 Security | Private key detection | ✅ Active |
+| 🔒 Security | Private key detection, API key detection, token scanning | ✅ Active |
+
+#### Secret Detection
+
+The framework includes comprehensive secret detection via `scripts/detect-secrets.sh`:
+
+**What It Detects**:
+
+- ✅ API keys (Stripe, OpenAI, Google, AWS, etc.)
+- ✅ GitHub tokens (PATs, OAuth tokens)
+- ✅ Cloud provider credentials (AWS, GCP, Azure)
+- ✅ Private keys (SSH, TLS, signing keys)
+- ✅ OAuth tokens and refresh tokens
+- ✅ JWT tokens
+- ✅ High-entropy strings (potential secrets)
+
+**False Positive Filtering**:
+
+- ✅ Ignores variable names (e.g., `api_key =`)
+- ✅ Ignores example/placeholder values
+- ✅ Ignores URLs and API endpoints
+- ✅ Ignores comments and documentation
+- ✅ Excludes test files and example files
+
+If secrets are detected, the commit will be blocked. Use example placeholders like
+`YOUR_API_KEY_HERE` instead of real secrets.
 
 ### CI/CD Configuration
 
@@ -429,7 +454,7 @@ This framework is designed with security as the highest priority:
 | Security Feature | Status | Description |
 |-----------------|--------|-------------|
 | 🔐 Secrets Protection | ✅ Active | Comprehensive `.gitignore` prevents accidental secret commits |
-| 🔍 Automated Detection | ✅ Active | Pre-commit hooks detect private keys and other secrets |
+| 🔍 Automated Detection | ✅ Active | Pre-commit hooks detect secrets via detect-secrets.sh |
 | 🛡️ Least Privilege | ✅ Active | All scripts should use least privilege principles |
 | ✅ Input Validation | ✅ Active | All inputs should be treated as untrusted |
 | 📋 Audit Trail | ✅ Active | Pre-commit logs provide an audit trail of quality checks |
@@ -475,6 +500,7 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for full 
 | `.pre-commit-config.yaml` | Quality check configuration | ✅ Required |
 | `.github/workflows/ci.yaml` | CI/CD pipeline definition | ✅ Required |
 | `scripts/run-precommit.sh` | Pre-commit execution wrapper (use this, not `pre-commit` directly) | ✅ Required |
+| `scripts/detect-secrets.sh` | Secret detection script (runs automatically via pre-commit) | ✅ Required |
 | `bootstrap-template-structure.sh` | Recreate template structure | ✅ Optional |
 
 ---

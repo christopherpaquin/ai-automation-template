@@ -294,9 +294,22 @@ Secrets must not appear:
 
 Repositories must enforce:
 
-- Pre-commit secret scanning
-- CI-level secret detection
+- Pre-commit secret scanning via `scripts/detect-secrets.sh`
+- CI-level secret detection (runs same pre-commit hooks)
 - AI agent instructions prohibiting secret creation or logging
+
+**Secret Detection Implementation**: This framework includes `scripts/detect-secrets.sh`, a
+comprehensive secret detection script that:
+
+- Scans staged files for API keys, tokens, credentials, and private keys
+- Uses pattern matching for known secret formats (GitHub tokens, AWS keys, Stripe keys, etc.)
+- Applies entropy analysis to detect high-entropy strings
+- Filters false positives (variable names, example values, API endpoints, comments)
+- Excludes test files, example files, and documentation from scanning
+- Provides clear error messages with file location and context
+
+AI agents must understand that this script will block commits containing secrets and must
+never attempt to bypass or disable this protection.
 
 High-entropy strings and known token patterns must be treated as potential secrets until proven otherwise.
 
@@ -508,6 +521,15 @@ AI agents must execute pre-commit using the repository helper script:
 ```bash
 ./scripts/run-precommit.sh
 ```
+
+**Secret Detection**: The pre-commit hooks include `scripts/detect-secrets.sh` which
+automatically scans all staged files for secrets, API keys, and credentials. If secrets
+are detected, the commit will be blocked. AI agents must:
+
+- Never attempt to bypass secret detection
+- Use example placeholders (e.g., `YOUR_API_KEY_HERE`) instead of real secrets
+- Ensure all secrets are stored in `.env` files (which are excluded from git)
+- If a false positive is detected, add appropriate allowlist patterns to the script
 
 ---
 

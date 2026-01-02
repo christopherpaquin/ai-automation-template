@@ -12,6 +12,16 @@ repos:
         args: [--fix=lf]
       - id: detect-private-key
 
+  # Custom secret detection (comprehensive API keys, tokens, credentials)
+  - repo: local
+    hooks:
+      - id: detect-secrets
+        name: Detect Secrets (API Keys, Tokens, Credentials)
+        entry: scripts/detect-secrets.sh
+        language: system
+        pass_filenames: false
+        always_run: false
+
   # Python: Ruff (lint + autofix) and Ruff formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.4

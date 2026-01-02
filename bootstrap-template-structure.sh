@@ -29,6 +29,7 @@ FILES=(
   ".github/ISSUE_TEMPLATE/feature_request.yml"
   ".github/ISSUE_TEMPLATE/bug_report.yml"
   "scripts/run-precommit.sh"
+  "scripts/detect-secrets.sh"
 )
 
 echo "==> Creating directory structure (no overwrite)"
