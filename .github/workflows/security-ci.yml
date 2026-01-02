@@ -1,0 +1,70 @@
+name: Security CI
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write # Required for SARIF uploads to GitHub Security
+
+jobs:
+  gitleaks:
+    name: Secret scan (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Scan full git history for secrets
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        # By default, fails the job when leaks are found
+        # This complements detect-secrets.sh in pre-commit
+
+  semgrep:
+    name: SAST (Semgrep CE)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/owasp-top-ten
+          generateSarif: "1"
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() # Upload even if Semgrep finds issues
+        with:
+          sarif_file: semgrep.sarif
+
+  osv-scanner:
+    name: Dependency vulns (OSV-Scanner)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: OSV-Scanner
+        uses: google/osv-scanner-action@v2
+        with:
+          scan-args: |-
+            -r .
+            --format json
+            --output osv-results.json
+
+      - name: Upload OSV results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osv-scan-results
+          path: osv-results.json
+          retention-days: 7

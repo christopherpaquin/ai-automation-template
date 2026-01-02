@@ -573,8 +573,14 @@ If secrets are detected, the commit will be blocked. Use example placeholders li
 
 ### CI/CD Configuration
 
-CI workflows are defined in `.github/workflows/ci.yaml`. The workflow consists
-of two jobs that run sequentially:
+This framework includes **two complementary CI workflows** that run in parallel:
+
+1. **`ci.yaml`**: Code quality and testing (pre-commit checks, unit tests)
+2. **`security-ci.yml`**: Security scanning (secret detection, SAST, dependency scanning)
+
+#### Main CI Workflow (`ci.yaml`)
+
+The main CI workflow consists of two jobs that run sequentially:
 
 **Job 1: Pre-commit Checks** (runs first):
 
@@ -600,6 +606,42 @@ of two jobs that run sequentially:
 - 📋 **Artifact logging**: Failed pre-commit runs generate downloadable logs
 - ⚡ **Efficient**: Tests only run if pre-commit passes
 - 🔄 **Consistent**: Same checks run locally and in CI
+
+#### Security CI Workflow (`security-ci.yml`)
+
+The security CI workflow runs **in parallel** with the main CI workflow and
+provides comprehensive security scanning:
+
+**Job 1: Gitleaks Secret Scanning**:
+
+- ✅ Scans full git history for secrets and credentials
+- ✅ Complements pre-commit `detect-secrets.sh` (defense in depth)
+- ✅ Catches secrets that may have slipped through pre-commit
+- ✅ Fails the workflow if secrets are detected
+
+**Job 2: Semgrep SAST**:
+
+- ✅ Static Application Security Testing (SAST)
+- ✅ Security audit rules (`p/security-audit`)
+- ✅ OWASP Top 10 vulnerability detection (`p/owasp-top-ten`)
+- ✅ Uploads results to GitHub Security tab (SARIF format)
+
+**Job 3: OSV-Scanner Dependency Scanning**:
+
+- ✅ Scans dependencies for known vulnerabilities
+- ✅ Uses Open Source Vulnerabilities (OSV) database
+- ✅ Generates JSON report with findings
+- ✅ Uploads results as workflow artifact
+
+**Key Features**:
+
+- 🔒 **Defense in Depth**: Multiple layers of security scanning
+- 📊 **GitHub Integration**: SARIF results appear in Security tab
+- ⚡ **Parallel Execution**: Runs simultaneously with main CI (faster)
+- 🔍 **Comprehensive**: Covers secrets, code vulnerabilities, and dependencies
+
+**Note**: Both workflows must pass for PRs to be mergeable. See
+`docs/security-ci-review.md` for detailed integration guidance.
 
 ### Markdown Configuration
 
@@ -653,10 +695,13 @@ This framework is designed with security as the highest priority:
 | Security Feature | Status | Description |
 |-----------------|--------|-------------|
 | 🔐 Secrets Protection | ✅ Active | Comprehensive `.gitignore` prevents accidental secret commits |
-| 🔍 Automated Detection | ✅ Active | Pre-commit hooks detect secrets via detect-secrets.sh |
+| 🔍 Pre-commit Detection | ✅ Active | Pre-commit hooks detect secrets via `detect-secrets.sh` |
+| 🔒 CI Secret Scanning | ✅ Active | Gitleaks scans full git history in CI (defense in depth) |
+| 🛡️ SAST Scanning | ✅ Active | Semgrep performs static security analysis (OWASP, security audit) |
+| 📦 Dependency Scanning | ✅ Active | OSV-Scanner checks dependencies for known vulnerabilities |
 | 🛡️ Least Privilege | ✅ Active | All scripts should use least privilege principles |
 | ✅ Input Validation | ✅ Active | All inputs should be treated as untrusted |
-| 📋 Audit Trail | ✅ Active | Pre-commit logs provide an audit trail of quality checks |
+| 📋 Audit Trail | ✅ Active | Pre-commit logs and CI artifacts provide audit trails |
 
 ### Security Best Practices
 
