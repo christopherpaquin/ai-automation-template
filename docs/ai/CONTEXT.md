@@ -295,7 +295,9 @@ Secrets must not appear:
 Repositories must enforce:
 
 - Pre-commit secret scanning via `scripts/detect-secrets.sh`
-- CI-level secret detection (runs same pre-commit hooks)
+- CI-level secret detection via Gitleaks (scans full git history)
+- SAST scanning via Semgrep (security audit and OWASP Top 10)
+- Dependency vulnerability scanning via OSV-Scanner
 - AI agent instructions prohibiting secret creation or logging
 
 **Secret Detection Implementation**: This framework includes `scripts/detect-secrets.sh`, a

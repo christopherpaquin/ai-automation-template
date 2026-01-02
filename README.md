@@ -610,28 +610,98 @@ The main CI workflow consists of two jobs that run sequentially:
 #### Security CI Workflow (`security-ci.yml`)
 
 The security CI workflow runs **in parallel** with the main CI workflow and
-provides comprehensive security scanning:
+provides comprehensive security scanning. This workflow is **automatically
+triggered** on every pull request and push to `main`, and can also be run
+manually via `workflow_dispatch`.
+
+**When It Runs**:
+
+- ✅ **Automatically** on every pull request (all branches)
+- ✅ **Automatically** on every push to `main` branch
+- ✅ **Manually** via GitHub Actions UI (`workflow_dispatch`)
 
 **Job 1: Gitleaks Secret Scanning**:
 
-- ✅ Scans full git history for secrets and credentials
-- ✅ Complements pre-commit `detect-secrets.sh` (defense in depth)
-- ✅ Catches secrets that may have slipped through pre-commit
-- ✅ Fails the workflow if secrets are detected
+**What It Scans**:
+- Full git history (including all commits, not just current changes)
+- All file types in the repository
+- Known secret patterns (API keys, tokens, credentials, private keys)
+- High-entropy strings that may indicate secrets
 
-**Job 2: Semgrep SAST**:
+**How It Notifies**:
+- ❌ **Fails the workflow** if secrets are detected
+- 📋 **Detailed output** in workflow logs showing:
+  - File path and line number where secret was found
+  - Secret type (e.g., "GitHub Token", "AWS Access Key")
+  - Commit hash where secret was introduced
+- 🔴 **Blocks PR merge** until secrets are removed
 
-- ✅ Static Application Security Testing (SAST)
-- ✅ Security audit rules (`p/security-audit`)
-- ✅ OWASP Top 10 vulnerability detection (`p/owasp-top-ten`)
-- ✅ Uploads results to GitHub Security tab (SARIF format)
+**Why It's Needed**:
+- Complements pre-commit `detect-secrets.sh` (defense in depth)
+- Catches secrets that may have slipped through pre-commit
+- Scans full git history (pre-commit only scans staged files)
+- Provides comprehensive coverage of all repository content
 
-**Job 3: OSV-Scanner Dependency Scanning**:
+**Job 2: Semgrep SAST (Static Application Security Testing)**:
 
-- ✅ Scans dependencies for known vulnerabilities
-- ✅ Uses Open Source Vulnerabilities (OSV) database
-- ✅ Generates JSON report with findings
-- ✅ Uploads results as workflow artifact
+**What It Scans**:
+- **Security Audit Rules** (`p/security-audit`): Common security vulnerabilities
+- **OWASP Top 10** (`p/owasp-top-ten`): Top 10 most critical web application
+  security risks
+- Code patterns that indicate security issues:
+  - SQL injection vulnerabilities
+  - Cross-site scripting (XSS) risks
+  - Insecure cryptographic usage
+  - Authentication and authorization flaws
+  - Insecure data handling
+  - And many more security anti-patterns
+
+**How It Notifies**:
+- 📊 **GitHub Security Tab**: Results uploaded as SARIF format
+  - Navigate to: Repository → Security → Code scanning alerts
+  - View detailed findings with code locations
+  - See severity levels and remediation guidance
+- 📋 **Workflow Logs**: Detailed output in GitHub Actions logs
+- ⚠️ **Workflow Status**: May fail if critical issues are found (configurable)
+- 🔔 **GitHub Notifications**: Security alerts appear in repository security
+  dashboard
+
+**Why It's Needed**:
+- Detects security vulnerabilities in code patterns
+- Identifies OWASP Top 10 risks before deployment
+- Provides actionable remediation guidance
+- Integrates with GitHub's security features
+
+**Job 3: OSV-Scanner Dependency Vulnerability Scanning**:
+
+**What It Scans**:
+- **Dependency files**: Automatically detects and scans:
+  - `requirements.txt`, `requirements-dev.txt` (Python)
+  - `package.json`, `package-lock.json` (Node.js)
+  - `poetry.lock`, `Pipfile.lock` (Python package managers)
+  - `go.mod`, `go.sum` (Go)
+  - `Cargo.lock` (Rust)
+  - `Gemfile.lock` (Ruby)
+  - And many other dependency lock files
+- **Open Source Vulnerabilities (OSV) Database**: Checks against known
+  vulnerabilities in open source packages
+- **Transitive dependencies**: Scans entire dependency tree, not just direct
+  dependencies
+
+**How It Notifies**:
+- 📦 **Workflow Artifact**: JSON report uploaded as `osv-scan-results`
+  - Download from workflow run page
+  - Contains detailed vulnerability information
+  - Includes affected packages, severity, and remediation steps
+- 📋 **Workflow Logs**: Summary output in GitHub Actions logs
+- ⚠️ **Workflow Status**: Fails if critical vulnerabilities are found
+- 🔔 **GitHub Dependabot Integration**: Results complement Dependabot alerts
+
+**Why It's Needed**:
+- Identifies known vulnerabilities in dependencies
+- Prevents vulnerable packages from being deployed
+- Provides early warning of security issues in third-party code
+- Complements GitHub's native dependency scanning
 
 **Key Features**:
 
@@ -639,9 +709,25 @@ provides comprehensive security scanning:
 - 📊 **GitHub Integration**: SARIF results appear in Security tab
 - ⚡ **Parallel Execution**: Runs simultaneously with main CI (faster)
 - 🔍 **Comprehensive**: Covers secrets, code vulnerabilities, and dependencies
+- 🚫 **Non-Bypassable**: Runs automatically on all PRs and pushes
+- 📈 **Actionable Results**: Detailed findings with remediation guidance
 
-**Note**: Both workflows must pass for PRs to be mergeable. See
-`docs/security-ci-review.md` for detailed integration guidance.
+**Workflow Status and PR Requirements**:
+
+- Both `CI` and `Security CI` workflows must pass for PRs to be mergeable
+- Security failures block PR merge until issues are resolved
+- Workflow status appears in PR checks section
+- Detailed logs available in GitHub Actions tab
+
+**Viewing Results**:
+
+1. **Workflow Logs**: GitHub Actions → Workflows → Security CI → View run
+2. **Security Tab**: Repository → Security → Code scanning alerts (Semgrep)
+3. **Artifacts**: Workflow run page → Artifacts (OSV-Scanner results)
+4. **PR Checks**: PR page shows workflow status and links to details
+
+**Note**: See `docs/security-ci-review.md` for detailed integration guidance and
+best practices.
 
 ### Markdown Configuration
 
