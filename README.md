@@ -11,6 +11,9 @@
 ![Tested on](https://img.shields.io/badge/tested%20on-RHEL%209%2F10%20%7C%20Ubuntu%2022.04-green.svg)
 ![Security](https://img.shields.io/badge/security-hardened-red.svg)
 ![Governance](https://img.shields.io/badge/governance-documentation%20driven-purple.svg)
+![CI](https://github.com/<org>/github-ai-engineering-framework/actions/workflows/ci.yaml/badge.svg)
+![AI-Governed](https://img.shields.io/badge/AI-Governed-critical)
+
 
 ---
 
