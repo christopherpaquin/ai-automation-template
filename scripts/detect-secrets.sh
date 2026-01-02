@@ -9,6 +9,12 @@
 # This script distinguishes between:
 # - Real secrets (high-entropy strings, known token patterns)
 # - False positives (variable names, example values, API call patterns)
+#
+# Performance optimizations:
+# - Combined regex patterns to reduce grep calls (O(n) instead of O(n*m))
+# - Single-pass file scanning with grep
+# - Optimized entropy calculation (pure bash, no subprocesses)
+# - Early exit for files with no matches
 ###############################################################################
 
 set -euo pipefail
@@ -19,122 +25,27 @@ YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-# Patterns that indicate secrets (high confidence)
-declare -a SECRET_PATTERNS=(
-  # API Keys (various formats)
-  'sk_live_[a-zA-Z0-9]{24,}'
-  'sk_test_[a-zA-Z0-9]{24,}'
-  'pk_live_[a-zA-Z0-9]{24,}'
-  'pk_test_[a-zA-Z0-9]{24,}'
-  'AIza[0-9A-Za-z_-]{35}'
-  'AKIA[0-9A-Z]{16}'
-  'sk-[a-zA-Z0-9]{32,}'
-  'xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24,}'
+# Combined secret pattern (all patterns OR'd together for single grep pass)
+# This reduces O(files × lines × patterns) to O(files × lines)
+SECRET_PATTERN='(sk_live_[a-zA-Z0-9]{24,}|sk_test_[a-zA-Z0-9]{24,}|pk_live_[a-zA-Z0-9]{24,}|pk_test_[a-zA-Z0-9]{24,}|AIza[0-9A-Za-z_-]{35}|AKIA[0-9A-Z]{16}|sk-[a-zA-Z0-9]{32,}|xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|ghu_[a-zA-Z0-9]{36}|ghs_[a-zA-Z0-9]{36}|ghr_[a-zA-Z0-9]{36}|ASIA[0-9A-Z]{16}|[a-zA-Z0-9+/=]{40,}|eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}|-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----|ya29\.[a-zA-Z0-9_-]+|1//[a-zA-Z0-9_-]+)'
 
-  # GitHub tokens
-  'ghp_[a-zA-Z0-9]{36}'
-  'gho_[a-zA-Z0-9]{36}'
-  'ghu_[a-zA-Z0-9]{36}'
-  'ghs_[a-zA-Z0-9]{36}'
-  'ghr_[a-zA-Z0-9]{36}'
+# Patterns that always indicate secrets (no entropy check needed)
+HIGH_CONFIDENCE_PATTERN='(BEGIN|PRIVATE|KEY|ghp_|sk_|AIza|AKIA)'
 
-  # AWS tokens
-  'AKIA[0-9A-Z]{16}'
-  'ASIA[0-9A-Z]{16}'
+# Combined allowlist pattern (for fast filtering)
+ALLOWLIST_PATTERN='(YOUR_API_KEY_HERE|your-api-key-here|example\.com|test_key|demo_key|placeholder|CHANGE_ME|REPLACE_ME|api_key\s*=|API_KEY\s*=|access_token\s*=|secret\s*=|https?://[a-zA-Z0-9.-]+|api/v[0-9]+|/api/|^\s*#.*(api|key|token|secret)|^\s*//.*(api|key|token|secret)|^\s*\*.*(api|key|token|secret))'
 
-  # Generic high-entropy strings (32+ chars, mixed case, numbers)
-  '[a-zA-Z0-9+/=]{40,}'
+# Files to exclude from scanning (compiled into single pattern for efficiency)
+EXCLUDE_PATTERN='(\.git/|\.env\.example$|\.gitignore$|artifacts/|\.pre-commit-cache/|node_modules/|\.venv/|venv/|__pycache__/|\.pytest_cache/|\.mypy_cache/|dist/|build/)'
 
-  # JWT tokens
-  'eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}'
-
-  # Private keys (PEM format)
-  '-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'
-
-  # OAuth tokens
-  'ya29\.[a-zA-Z0-9_-]+'
-  '1//[a-zA-Z0-9_-]+'
-)
-
-# Patterns that are likely false positives (allowlist)
-declare -a ALLOWLIST_PATTERNS=(
-  # Example/placeholder values
-  'YOUR_API_KEY_HERE'
-  'your-api-key-here'
-  'example\.com'
-  'test_key'
-  'demo_key'
-  'placeholder'
-  'CHANGE_ME'
-  'REPLACE_ME'
-
-  # Variable names (not values)
-  'api_key\s*='
-  'API_KEY\s*='
-  'access_token\s*='
-  'secret\s*='
-
-  # Common API call patterns (URLs, endpoints)
-  'https?://[a-zA-Z0-9.-]+'
-  'api/v[0-9]+'
-  '/api/'
-
-  # Documentation/comments
-  '^\s*#.*(api|key|token|secret)'
-  '^\s*//.*(api|key|token|secret)'
-  '^\s*\*.*(api|key|token|secret)'
-
-  # Test files
-  'test.*\.(py|js|sh)$'
-  '.*test\.(py|js|sh)$'
-  'mock.*\.(py|js|sh)$'
-
-  # Example files
-  '\.example$'
-  '\.sample$'
-  'example\.'
-)
-
-# Files to exclude from scanning
-declare -a EXCLUDE_PATTERNS=(
-  '\.git/'
-  '\.env\.example$'
-  '\.gitignore$'
-  'artifacts/'
-  '\.pre-commit-cache/'
-  'node_modules/'
-  '\.venv/'
-  'venv/'
-  '__pycache__/'
-  '\.pytest_cache/'
-  '\.mypy_cache/'
-  'dist/'
-  'build/'
-)
-
-# Function to check if file should be excluded
+# Function to check if file should be excluded (optimized with single regex)
 should_exclude_file() {
   local file="$1"
-  for pattern in "${EXCLUDE_PATTERNS[@]}"; do
-    if [[ "${file}" =~ ${pattern} ]]; then
-      return 0
-    fi
-  done
-  return 1
+  [[ "${file}" =~ ${EXCLUDE_PATTERN} ]]
 }
 
-# Function to check if pattern matches allowlist
-is_allowlisted() {
-  local line="$1"
-  for pattern in "${ALLOWLIST_PATTERNS[@]}"; do
-    if echo "${line}" | grep -qiE "${pattern}"; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# Function to calculate entropy (simple approximation)
+# Optimized entropy calculation (pure bash, no subprocesses)
+# Uses associative array to count unique characters
 calculate_entropy() {
   local str="$1"
   local len=${#str}
@@ -143,14 +54,17 @@ calculate_entropy() {
     return
   fi
 
-  # Count unique characters
-  local unique_chars
-  unique_chars=$(echo "${str}" | fold -w1 | sort -u | wc -l)
-  # Simple entropy approximation
-  echo "${unique_chars}"
+  # Count unique characters using associative array (bash 4+)
+  # This is much faster than fold | sort | wc
+  declare -A chars
+  local i
+  for ((i = 0; i < len; i++)); do
+    chars[${str:i:1}]=1
+  done
+  echo "${#chars[@]}"
 }
 
-# Main detection function
+# Main detection function (optimized)
 detect_secrets() {
   local found_secrets=0
   local files_checked=0
@@ -164,10 +78,11 @@ detect_secrets() {
     return 0
   fi
 
+  # Process files efficiently
   while IFS= read -r file; do
     [[ -z "${file}" ]] && continue
 
-    # Skip excluded files
+    # Skip excluded files (fast check)
     if should_exclude_file "${file}"; then
       continue
     fi
@@ -175,39 +90,62 @@ detect_secrets() {
     # Skip if file doesn't exist (might be deleted)
     [[ ! -f "${file}" ]] && continue
 
+    # Skip binary files (fast check - grep -I fails on binary files)
+    if ! grep -qI . "${file}" 2> /dev/null; then
+      continue
+    fi
+
     files_checked=$((files_checked + 1))
 
-    # Check each line for secret patterns
-    local line_num=0
-    while IFS= read -r line || [[ -n "${line}" ]]; do
-      line_num=$((line_num + 1))
+    # Use grep to find all lines with potential secrets in one pass
+    # This is much faster than reading the entire file line by line
+    local matches
+    matches=$(grep -nE "${SECRET_PATTERN}" "${file}" 2> /dev/null || true)
 
-      # Skip allowlisted patterns
-      if is_allowlisted "${line}"; then
+    # Early exit: if no matches, skip this file entirely
+    if [[ -z "${matches}" ]]; then
+      continue
+    fi
+
+    # Process only the matching lines (much smaller set than entire file)
+    while IFS= read -r match_line; do
+      [[ -z "${match_line}" ]] && continue
+
+      # Extract line number and content
+      local line_num="${match_line%%:*}"
+      local line="${match_line#*:}"
+
+      # Fast allowlist check (single grep call)
+      if echo "${line}" | grep -qiE "${ALLOWLIST_PATTERN}"; then
         continue
       fi
 
-      # Check against secret patterns
-      for pattern in "${SECRET_PATTERNS[@]}"; do
-        if echo "${line}" | grep -qE "${pattern}"; then
-          # Additional check: high entropy
-          local matched_part
-          matched_part=$(echo "${line}" | grep -oE "${pattern}" | head -1)
-          local entropy
-          entropy=$(calculate_entropy "${matched_part}")
+      # Extract matched secret part
+      local matched_part
+      matched_part=$(echo "${line}" | grep -oE "${SECRET_PATTERN}" | head -1)
 
-          # If it's a high-entropy match, flag it
-          if [[ ${entropy} -gt 8 ]] || echo "${pattern}" | grep -qE "(BEGIN|PRIVATE|KEY|ghp_|sk_|AIza|AKIA)"; then
-            echo -e "${RED}✗ Potential secret found in ${file}:${line_num}${NC}"
-            echo -e "  ${YELLOW}Pattern:${NC} ${pattern}"
-            echo -e "  ${YELLOW}Context:${NC} ${line:0:100}..."
-            echo ""
-            found_secrets=$((found_secrets + 1))
-            break
-          fi
-        fi
-      done
-    done < "${file}"
+      # Check if it's a high-confidence pattern (skip entropy check for speed)
+      if echo "${matched_part}" | grep -qE "${HIGH_CONFIDENCE_PATTERN}"; then
+        echo -e "${RED}✗ Potential secret found in ${file}:${line_num}${NC}"
+        echo -e "  ${YELLOW}Pattern:${NC} ${matched_part:0:50}..."
+        echo -e "  ${YELLOW}Context:${NC} ${line:0:100}..."
+        echo ""
+        found_secrets=$((found_secrets + 1))
+        continue
+      fi
+
+      # For generic patterns, check entropy (only when needed)
+      local entropy
+      entropy=$(calculate_entropy "${matched_part}")
+
+      if [[ ${entropy} -gt 8 ]]; then
+        echo -e "${RED}✗ Potential secret found in ${file}:${line_num}${NC}"
+        echo -e "  ${YELLOW}Pattern:${NC} ${matched_part:0:50}..."
+        echo -e "  ${YELLOW}Context:${NC} ${line:0:100}..."
+        echo ""
+        found_secrets=$((found_secrets + 1))
+      fi
+    done <<< "${matches}"
   done <<< "${staged_files}"
 
   if [[ ${found_secrets} -gt 0 ]]; then
