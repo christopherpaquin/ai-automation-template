@@ -8,8 +8,8 @@ on:
 
 permissions:
   contents: read
-  actions: read          # Recommended/required for SARIF upload in OSV reusable workflows
-  security-events: write # Required for SARIF uploads to GitHub Security
+  actions: read
+  security-events: write
 
 jobs:
   gitleaks:
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Scan full git history for secrets
+          fetch-depth: 0
 
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
@@ -40,17 +40,15 @@ jobs:
           generateSarif: "1"
 
       - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: semgrep.sarif
 
-  # IMPORTANT: OSV is invoked as a reusable workflow (job-level "uses"), not a step.
   osv-scanner:
     name: Dependency vulns (OSV-Scanner)
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.1
     with:
-      # OSV's reusable workflow sets SARIF output itself; do not override --format/--output here.
       scan-args: |-
         --recursive
         ./
