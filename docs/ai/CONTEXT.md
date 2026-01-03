@@ -27,8 +27,7 @@ it must not be implemented without clarification.
 - Secondary OS: Ubuntu 22.04 (best-effort)
 - Shell: bash
 - Python: 3.11+
-
-Do not assume additional tools are installed unless explicitly documented.
+- Do not assume additional tools are installed unless explicitly documented.
 
 ---
 
@@ -309,17 +308,24 @@ comprehensive secret detection script that:
 - Filters false positives (variable names, example values, API endpoints, comments)
 - Excludes test files, example files, and documentation from scanning
 - Provides clear error messages with file location and context
-
-AI agents must understand that this script will block commits containing secrets and must
-never attempt to bypass or disable this protection.
-
-High-entropy strings and known token patterns must be treated as potential secrets until proven otherwise.
+- AI agents must understand that this script will block commits containing secrets
+  and must never attempt to bypass or disable this protection.
+- High-entropy strings and known token patterns must be treated as potential secrets until proven otherwise
 
 #### 7.1.5 Security Posture Statement
 
 **Secrets** — including API keys, access tokens, credentials, private keys, or any
 material that grants authenticated or billable access — **must never be committed
 to Git repositories** and must be actively scanned for in both code and configuration.
+
+**⚠️ CRITICAL: Commit messages are permanent in git history and must NEVER contain:**
+- Passwords, credentials, or secrets
+- IP addresses (especially private/internal IPs)
+- API keys or tokens
+- Any sensitive information
+
+Commit messages are scanned by `scripts/check-commit-message.sh` to prevent
+accidental exposure of sensitive data in git history.
 
 ### 7.2 General Security Standards
 
